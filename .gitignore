@@ -1,0 +1,12 @@
+node_modules
+package-lock.json
+
+.vscode
+yarn-error.log
+dist
+build
+.env.local
+packages/server/utils/_reportData
+packages/server/coverage
+packages/server/tmp
+config.env
