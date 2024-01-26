@@ -21,13 +21,11 @@ router.delete(
   userController.inactiveUser
 );
 
-router
-  .route('/')
-  .get(userController.getAllUsers)
-  .post(userController.createUser);
+router.route('/').get(userController.getAllUsers);
 
-router.route('/:id').get(userController.getUser);
-// .patch(userController.updateUser)
-// .delete(userController.deleteUser);
+router
+  .route('/:id')
+  .get(userController.getUser)
+  .delete(userController.deleteUser);
 
 module.exports = router;

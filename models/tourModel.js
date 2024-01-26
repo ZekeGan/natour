@@ -75,12 +75,51 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      // geoJSON
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      description: String,
+      coordinates: [Number],
+      address: String,
+    },
+    locations: [
+      {
+        // geoJSON
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    // child reference
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
+
+// Virtual Populate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id',
+});
 
 // 0) compute data after get the data from DB
 tourSchema.virtual('durationCalcs').get(function () {
@@ -89,7 +128,6 @@ tourSchema.virtual('durationCalcs').get(function () {
 
 // 1) DOCUMENT MIDDLEWARE: run only in .save() and .create()
 tourSchema.pre('save', function (next) {
-  // console.log('pre', this);
   this.slug = slugify(this.name, { lower: true });
   next();
 });
@@ -101,10 +139,14 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
+tourSchema.pre(/^find/, function (next) {
+  this.populate('guides');
+  next();
+});
+
 // 3) AGGREGATE MIDDLEWARE: run only in aggregate()
 tourSchema.pre('aggregate', function (next) {
   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
-  // console.log('agg: ', this.pipeline());
   next();
 });
 

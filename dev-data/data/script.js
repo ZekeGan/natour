@@ -8,7 +8,7 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Tour = require('../../../models/tourModel');
+const Tour = require('../../models/tourModel');
 
 dotenv.config({ path: '../../config.env' });
 
@@ -23,7 +23,7 @@ mongoose
   });
 
 // import static json file
-const tours = JSON.parse(fs.readFileSync('./tours-simple.json', 'utf-8'));
+const tours = JSON.parse(fs.readFileSync('./tours.json', 'utf-8'));
 
 // import script
 const importData = async () => {

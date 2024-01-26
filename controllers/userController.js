@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const AppErrors = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const factory = require('./handlerFactory');
 
 const filterBody = (body, filterArr) => {
   let newBody = {};
@@ -17,15 +18,6 @@ exports.getAllUsers = catchAsync(async (req, res) => {
     status: 'success',
     length: users.length,
     data: users,
-  });
-});
-
-exports.createUser = catchAsync(async (req, res) => {
-  const user = await User.create(req.body);
-
-  res.status(201).json({
-    status: 'success',
-    data: user,
   });
 });
 
@@ -61,6 +53,8 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
+
+exports.deleteUser = factory.deleteOne(User);
 
 exports.inactiveUser = catchAsync(async (req, res) => {
   await User.findByIdAndUpdate(

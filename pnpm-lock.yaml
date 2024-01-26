@@ -14,12 +14,18 @@ dependencies:
   express:
     specifier: ^4.16.4
     version: 4.16.4
+  express-mongo-sanitize:
+    specifier: ^2.2.0
+    version: 2.2.0
   express-rate-limit:
     specifier: ^7.1.5
     version: 7.1.5(express@4.16.4)
   helmet:
     specifier: ^7.1.0
     version: 7.1.0
+  hpp:
+    specifier: ^0.2.3
+    version: 0.2.3
   jsonwebtoken:
     specifier: ^9.0.2
     version: 9.0.2
@@ -257,6 +263,11 @@ packages:
     engines: {node: '>= 0.6'}
     dev: false
 
+  /express-mongo-sanitize@2.2.0:
+    resolution: {integrity: sha512-PZBs5nwhD6ek9ZuP+W2xmpvcrHwXZxD5GdieX2dsjPbAbH4azOkrHbycBud2QRU+YQF1CT+pki/lZGedHgo/dQ==}
+    engines: {node: '>=10'}
+    dev: false
+
   /express-rate-limit@7.1.5(express@4.16.4):
     resolution: {integrity: sha512-/iVogxu7ueadrepw1bS0X0kaRC/U0afwiYRSLg68Ts+p4Dc85Q5QKsOnPS/QUjPMHvOJQtBDrZgvkOzf8ejUYw==}
     engines: {node: '>= 16'}
@@ -359,6 +370,14 @@ packages:
   /helmet@7.1.0:
     resolution: {integrity: sha512-g+HZqgfbpXdCkme/Cd/mZkV0aV3BZZZSugecH03kl38m/Kmdx8jKjBikpDj2cr+Iynv4KpYEviojNdTJActJAg==}
     engines: {node: '>=16.0.0'}
+    dev: false
+
+  /hpp@0.2.3:
+    resolution: {integrity: sha512-4zDZypjQcxK/8pfFNR7jaON7zEUpXZxz4viyFmqjb3kWNWAHsLEUmWXcdn25c5l76ISvnD6hbOGO97cXUI3Ryw==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      lodash: 4.17.21
+      type-is: 1.6.18
     dev: false
 
   /http-errors@1.6.3:

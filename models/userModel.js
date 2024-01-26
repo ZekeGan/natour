@@ -62,6 +62,10 @@ userSchema.pre(/^find/, function (next) {
   next();
 });
 
+userSchema.pre(/^find/, function (next) {
+  next();
+});
+
 // instance method of the schema, it can use when one instance was establish.
 // Example:
 // const user = new User()
