@@ -33,6 +33,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.0,
       max: [5, 'ratingsAverage must be below 5'],
       min: [0, 'ratings Average must be above 0'],
+      set: (val) => Math.round(val * 10) / 10,
     },
     ratingsQuantity: {
       type: Number,
@@ -58,11 +59,11 @@ const tourSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, 'A tour must have a description'],
+      // required: [true, 'A tour must have a description'],
     },
     imageCover: {
       type: String,
-      required: [true, 'A tour must have a imageCover'],
+      // required: [true, 'A tour must have a imageCover'],
     },
     images: [String],
     createdAt: {
@@ -114,6 +115,11 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
+// indexes
+tourSchema.index({ price: 1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
+
 // Virtual Populate
 tourSchema.virtual('reviews', {
   ref: 'Review',
@@ -146,7 +152,7 @@ tourSchema.pre(/^find/, function (next) {
 
 // 3) AGGREGATE MIDDLEWARE: run only in aggregate()
 tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  // this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
   next();
 });
 

@@ -11,30 +11,12 @@ const filterBody = (body, filterArr) => {
   return newBody;
 };
 
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await User.find();
+exports.addCurrentUserIdIntoParams = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
 
-  res.status(201).json({
-    status: 'success',
-    length: users.length,
-    data: users,
-  });
-});
-
-exports.getUser = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-
-  if (!user) {
-    return next(new AppErrors(`user not found with given id ${req.params.id}`));
-  }
-
-  res.status(201).json({
-    status: 'success',
-    data: user,
-  });
-});
-
-exports.updateUser = catchAsync(async (req, res, next) => {
+exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm)
     return next(
       new AppErrors(
@@ -53,10 +35,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
-
-exports.deleteUser = factory.deleteOne(User);
-
-exports.inactiveUser = catchAsync(async (req, res) => {
+exports.inactiveMe = catchAsync(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     { active: false },
@@ -68,3 +47,11 @@ exports.inactiveUser = catchAsync(async (req, res) => {
     data: null,
   });
 });
+
+exports.getAllUsers = factory.getAll(User);
+exports.getUser = factory.getOne(User);
+exports.createUser = factory.errorResponse(
+  'This route is undefined. If you want to create a new user, please use /signup.'
+);
+exports.updateUser = factory.updateOne(User); // Do NOT update password with this route
+exports.deleteUser = factory.deleteOne(User);

@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -5,15 +6,20 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 
-const globalErrorHandler = require('./utils/appError');
-const errorController = require('./controllers/errorController');
-
-// route
 const tourRouter = require('./routes/tourRoute');
 const userRouter = require('./routes/userRoute');
 const reviewRouter = require('./routes/reviewRoute');
+const errorController = require('./controllers/errorController');
+const globalErrorHandler = require('./utils/appError');
 
 const app = express();
+
+// * set view engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// * static file
+app.use(express.static(path.join(__dirname, 'public')));
 
 // GLOBAL MIDDLEWARE
 // set security HTTP header
@@ -48,10 +54,12 @@ app.use(
   })
 );
 
-// static file
-app.use(express.static(`${__dirname}/../public`));
+// * router
+// response the site
+app.get('/', (req, res) => {
+  res.status(200).render('base');
+});
 
-// router
 app.use('/api/v1/tour', tourRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/review', reviewRouter);
