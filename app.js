@@ -3,12 +3,16 @@ const express = require('express');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 const hpp = require('hpp');
 
+const viewRouter = require('./routes/viewRoute');
 const tourRouter = require('./routes/tourRoute');
 const userRouter = require('./routes/userRoute');
 const reviewRouter = require('./routes/reviewRoute');
+
 const errorController = require('./controllers/errorController');
 const globalErrorHandler = require('./utils/appError');
 
@@ -23,7 +27,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // GLOBAL MIDDLEWARE
 // set security HTTP header
-app.use(helmet());
+app.use(
+  helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false })
+);
 
 // develop debugger
 if (process.env.NODE_ENV === 'develop') {
@@ -38,11 +44,16 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// body parser, parse the body if it was JSON.
-app.use(express.json({ limit: '10kb' }));
+// parser
+app.use(express.json({ limit: '10kb' })); // parse the body if it was JSON.
+app.use(express.urlencoded({ limit: '10kb', extends: true }));
+app.use(cookieParser()); // parse the cookie if it had
 
 // data sanitization against NoSQL query injection
 app.use(mongoSanitize());
+
+// cors
+app.use(cors());
 
 // data sanitization against XSS
 // ! xss-clean has been deprecated
@@ -54,17 +65,19 @@ app.use(
   })
 );
 
-// * router
-// response the site
-app.get('/', (req, res) => {
-  res.status(200).render('base');
+// test
+app.use((req, res, next) => {
+  // console.log(req.cookies);
+  next();
 });
 
+// * router
+app.use('/', viewRouter);
 app.use('/api/v1/tour', tourRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/review', reviewRouter);
 
-// error handler
+// * error handler
 app.all('*', (req, res, next) => {
   next(new globalErrorHandler(`route ${req.originalUrl} not found`, 404));
 });

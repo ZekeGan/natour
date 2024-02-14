@@ -1,6 +1,5 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -13,24 +12,26 @@ const signToken = (id) =>
 
 const sendBackToClient = (user, statusCode, res) => {
   const token = signToken(user._id);
+  user.password = undefined;
 
   const cookieOption = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE_IN * 1000 * 60 * 60 * 24 // 天
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
   };
 
-  if (process.env.NODE_ENV === 'production') cookieOption.secure = true;
+  if (process.env.NODE_ENV === 'production') {
+    cookieOption.secure = true;
+  }
 
   res.cookie('jwt', token, cookieOption);
-
-  user.password = undefined;
-
   res.status(statusCode).json({
     status: 'success',
     token,
-    data: user,
+    data: {
+      user,
+    },
   });
 };
 
@@ -69,15 +70,28 @@ exports.login = catchAsync(async (req, res, next) => {
   sendBackToClient(user, 200, res);
 });
 
+exports.logout = catchAsync(async (req, res) => {
+  res.cookie('jwt', '', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+});
+
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) checking is authorization exist
-  const bearer = req.headers.authorization;
-  if (!bearer || !bearer.startsWith('Bearer')) {
-    return next(new AppError('Please authorization', 400));
+  let token;
+  if (
+    !req.headers.authorization ||
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization?.split(' ')[1];
   }
 
-  // 2) check is token exist
-  const token = req.headers.authorization?.split(' ')[1];
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
+
   if (!token) {
     return next(new AppError('Please login.', 401));
   }
@@ -107,6 +121,24 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   next();
 });
+
+exports.isLogin = async (req, res, next) => {
+  if (!req.cookies.jwt) return next();
+
+  const decoded = await jwt.verify(req.cookies.jwt, process.env.JWT_SECRET);
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) return next();
+
+  const isPasswordChanged =
+    await currentUser.isChangedPasswordBeforeTokenExpired(
+      currentUser.changedPasswordAt,
+      decoded.iat
+    );
+  if (isPasswordChanged) return next();
+
+  res.locals.user = currentUser;
+  next();
+};
 
 exports.allowRole = (...roles) => {
   return (req, res, next) => {
@@ -202,7 +234,6 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   //! do not use any update in password
   user.password = req.body.newPassword;
   user.passwordConfirm = req.body.newPasswordConfirm;
-  user.changedPasswordAt = Date.now();
   await user.save();
 
   // 4. log user in, and send token

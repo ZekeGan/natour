@@ -1,12 +1,13 @@
 const express = require('express');
-
-const router = express.Router();
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
+
+const router = express.Router();
 
 // user control
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+router.get('/logout', authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
@@ -19,7 +20,12 @@ router.get(
   userController.addCurrentUserIdIntoParams,
   userController.getUser
 );
-router.patch('/updateMe', userController.updateMe);
+router.patch(
+  '/updateMe',
+  userController.uploadUserPhoto,
+  userController.resizeUserPhoto,
+  userController.updateMe
+);
 router.delete('/inactiveMe', userController.inactiveMe);
 
 // basic CRUD

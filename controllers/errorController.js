@@ -1,28 +1,45 @@
 const AppErrors = require('../utils/appError');
 
-const sendErrDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message,
-    stack: err.stack,
-    error: err,
-  });
-};
-
-const sendErrProd = (err, res) => {
-  // Operational error
-  if (err.isOperational) {
+const sendErrDev = (err, req, res) => {
+  // * API ERROR
+  if (req.originalUrl.startsWith('/api/')) {
     return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
+      stack: err.stack,
+      error: err,
     });
   }
 
-  // Programming error
-  console.error('ERROR: ', err);
-  res.status(500).json({
-    status: 'fail',
-    message: 'something went wrong.',
+  // * WEBSITE PAGE NOT FOUND
+  res.status(err.statusCode).render('error', {
+    title: 'Page not found',
+    msg: err.message,
+  });
+};
+
+const sendErrProd = (err, req, res) => {
+  // * API ERROR
+  if (req.originalUrl.startsWith('/api/')) {
+    // Operational error
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
+
+    // Programming error
+    return res.status(500).json({
+      status: 'fail',
+      message: 'something went wrong.',
+    });
+  }
+
+  // * WEBSITE PAGE NOT FOUND
+  res.status(err.statusCode).render('error', {
+    title: 'Page not found',
+    msg: err.message,
   });
 };
 
@@ -59,11 +76,11 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || 'a error has occured';
 
   if (process.env.NODE_ENV === 'develop') {
-    sendErrDev(err, res);
+    sendErrDev(err, req, res);
   }
 
   if (process.env.NODE_ENV === 'production') {
-    let error = { ...err };
+    let error = { ...err, message: err.message };
 
     // handle mongoose error
     if (err.name === 'CastError') error = handleCastErrorDB(err);
@@ -74,6 +91,6 @@ module.exports = (err, req, res, next) => {
     if (err.name === 'JsonWebTokenError') error = handleInvalidJWTError(err);
     if (err.name === 'TokenExpiredError') error = handleJWTExpiredError(err);
 
-    sendErrProd(error, res);
+    sendErrProd(error, req, res);
   }
 };

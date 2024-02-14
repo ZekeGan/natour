@@ -1,7 +1,52 @@
+const multer = require('multer');
+const sharp = require('sharp');
+
 const Tour = require('../models/tourModel');
 const AppErrors = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) return cb(null, true);
+  return cb(new AppErrors('Please upload image files.', 400), false);
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadTourImages = upload.fields([
+  { name: 'imageCover', max: 1 },
+  { name: 'images', max: 3 },
+]);
+
+exports.resizeTourImages = catchAsync(async (req, res, next) => {
+  if (!req.files.imageCover || !req.files.images) return next();
+
+  req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.imageCover[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/tours/${req.body.imageCover}`);
+
+  req.body.images = [];
+  await Promise.all(
+    req.files.images.forEach(async (item, i) => {
+      req.body.images[i] = `tour-${req.params.id}-${Date.now()}-${i}.jpeg`;
+      await sharp(item.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/tours/${req.body.images[i]}`);
+    })
+  );
+
+  next();
+});
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = 5;
@@ -84,7 +129,9 @@ exports.getTourWithin = catchAsync(async (req, res, next) => {
   const radius = radiusMap[unit];
 
   if (!lat || !lng) {
-    return next(new AppErrors('Please provide valid latitude and longitude.'));
+    return next(
+      new AppErrors('Please provide valid latitude and longitude.', 400)
+    );
   }
 
   const tours = await Tour.find({
@@ -111,7 +158,9 @@ exports.getDistances = catchAsync(async (req, res, next) => {
   };
 
   if (!lat || !lng)
-    return next(new AppErrors('Please provide valid latitude and longitude.'));
+    return next(
+      new AppErrors('Please provide valid latitude and longitude.', 400)
+    );
 
   const distances = await Tour.aggregate([
     {
@@ -131,8 +180,6 @@ exports.getDistances = catchAsync(async (req, res, next) => {
       },
     },
   ]);
-
-  console.log(distances);
 
   res.status(500).json({
     status: 'success',

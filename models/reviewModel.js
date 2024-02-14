@@ -43,7 +43,7 @@ reviewSchema.pre(/^find/, function (next) {
     // .populate({ path: 'tour', select: 'name' })
     .populate({
       path: 'user',
-      select: 'name',
+      select: 'name photo',
     });
   next();
 });
@@ -65,7 +65,6 @@ reviewSchema.statics.calsAverageRating = async function (tourId) {
       },
     },
   ]);
-  console.log(stats);
   if (stats.length > 0) {
     await Tour.findByIdAndUpdate(tourId, {
       ratingsQuantity: stats[0].numberOfRating,

@@ -140,7 +140,6 @@ tourSchema.pre('save', function (next) {
 
 // 2) QUERY MIDDLEWARE: run only in .find() relatively functions
 tourSchema.pre(/^find/, function (next) {
-  // console.log(this);
   this.find({ secretTour: { $ne: true } });
   next();
 });
